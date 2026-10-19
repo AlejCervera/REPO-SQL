@@ -1,0 +1,203 @@
+
+CREATE TABLE IF NOT EXISTS peliculas (
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    titulo           VARCHAR(100) NOT NULL,
+    genero           VARCHAR(30),
+    valoracion       NUMERIC(4,4),
+    anio_estreno     INTEGER,
+    disponible       BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_alta       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+--- Añade una columna "director" de tipo VARCHAR(50) ---
+
+ALTER TABLE peliculas ADD COLUMN IF NOT EXISTS director VARCHAR(50);
+
+--- Cambia el tipo de la columna "anio_estreno" a VARCHAR(4) ---
+
+ALTER TABLE peliculas ALTER COLUMN anio_estreno TYPE VARCHAR(4);
+
+--- Renombra la columna "director" a "director_principal" ---
+
+ALTER TABLE peliculas RENAME COLUMN director TO director_principal;
+
+--- Elimina la columna "director_principal" ---
+
+ALTER TABLE peliculas DROP COLUMN IF EXISTS director_principal;
+
+--- Inserta una película indicando únicamente el título ---
+
+INSERT INTO peliculas (titulo)
+VALUES ('Torrente: Presidente');
+
+--- Inserta 4 películas de golpe con todos los datos (titulo, genero, valoracion, anio_estreno) 
+--- Usa géneros variados (Drama, Comedia, Terror, Ciencia ficción) y valoraciones distintas
+
+INSERT INTO peliculas (titulo, genero, valoracion, anio_estreno) VALUES
+    ('Padre no hay más que uno', 'Comedia', 2.9, '2019'),
+    ('Seven', 'Policíaca', 9.5, '1995'),
+    ('Batman: El Caballero Oscuro', 'Superhéroes', 8.9, '2008'),
+    ('Hereditary', 'Terror', 8.75, '2018');
+
+--- Todas las columnas y todas las filas. ---
+
+SELECT * FROM peliculas;
+
+--- Solo el título y el género. ---
+
+SELECT titulo, genero FROM peliculas;
+
+--- disponible = True ---
+
+SELECT titulo AS nombre_pelicula FROM peliculas;
+
+--- Título y valoración de las películas disponibles (disponible = TRUE). ---
+
+SELECT titulo, valoracion FROM peliculas WHERE disponible = True;
+
+--- Título y género cuando el género contenga "Comedia". ---
+
+SELECT titulo, genero FROM peliculas WHERE genero = 'Comedia';
+
+--- Título de las películas disponibles con valoración mayor o igual a 8. ---
+
+SELECT titulo FROM peliculas WHERE disponible = True AND valoracion >= 8;
+
+--- Elimina la película que insertaste indicando solo el título (paso 3.1) ---
+
+DELETE FROM peliculas
+WHERE nombre = 'Torrente: Presidente';
+
+--- Marca como no disponible (disponible = FALSE) la película con peor valoración ---
+
+UPDATE peliculas
+SET disponible = FALSE
+WHERE valoracion = 2.9;
+
+--- Actualiza el género de una película concreta usando su id ---
+
+UPDATE peliculas
+SET genero = 'Misterio'
+WHERE titulo = 'Seven';
+
+--- Películas cuyo género NO contenga "Terror" ---
+
+SELECT *
+FROM peliculas
+WHERE genero NOT LIKE '%Terror%';
+
+--- Películas con valoración entre 6 y 9 (BETWEEN) ---
+
+SELECT *
+FROM peliculas
+WHERE valoracion BETWEEN 6 AND 9;
+
+--- Muestra solo las 3 primeras películas (LIMIT) ---
+
+SELECT *
+FROM peliculas
+LIMIT 3;
+
+--- Muestra los géneros distintos que existen en la tabla (DISTINCT) ---
+
+SELECT DISTINCT genero
+FROM peliculas;
+
+--- Muestra el título en mayúsculas (UPPER) ---
+
+SELECT UPPER(titulo) AS titulo_mayusculas
+FROM peliculas;
+
+--- Muestra el género en minúsculas (LOWER) ---
+
+SELECT LOWER(genero) AS genero_minusculas
+FROM peliculas;
+
+--- Crea una columna que combine título y año de estreno con el formato «titulo (anio)» ---
+
+SELECT titulo || ' (' || anio_estreno || ')' AS titulo_anio
+FROM peliculas;
+
+--- Muestra el género de cada película y, si es NULL, muestra «Sin género» ---
+
+SELECT titulo, COALESCE(genero, 'Sin género') AS genero
+FROM peliculas;
+
+-- Ordena las películas por valoración de mayor a menor ---
+
+SELECT *
+FROM peliculas
+ORDER BY valoracion DESC;
+
+-- Ordena primero por disponibilidad (disponibles primero) y luego por valoración ascendente ---
+
+SELECT *
+FROM peliculas
+ORDER BY disponible DESC, valoracion ASC;
+
+--- Muestra el título y la valoración más 1 punto ---
+
+SELECT titulo, valoracion + 1 AS valoracion_mas_uno
+FROM peliculas;
+
+--- Muestra el título y la valoración menos 1 punto ---
+
+SELECT titulo, valoracion - 1 AS valoracion_menos_uno
+FROM peliculas;
+
+--- Muestra el título y la valoración duplicada ---
+
+SELECT titulo, valoracion * 2 AS valoracion_duplicada
+FROM peliculas;
+--- Muestra el título y la mitad de la valoración ---
+
+SELECT titulo, valoracion / 2 AS mitad_valoracion
+FROM peliculas;
+
+--- Muestra el título y la valoración redondeada a 0 decimales (ROUND) ---
+
+SELECT titulo, ROUND(valoracion, 0) AS valoracion_redondeada
+FROM peliculas;
+
+--- Calcula el total de películas, la valoración media, la valoración máxima y la valoración mínima ---
+
+SELECT COUNT(*) AS total_peliculas,
+    AVG(valoracion) AS valoracion_media,
+    MAX(valoracion) AS valoracion_maxima,
+    MIN(valoracion) AS valoracion_minima
+FROM peliculas;
+
+--- Cuenta cuántas películas hay por género ---
+
+SELECT genero, COUNT(*) AS total_peliculas
+FROM peliculas
+GROUP BY genero;
+
+--- Calcula la valoración media por género ---
+
+SELECT genero, AVG(valoracion) AS valoracion_media
+FROM peliculas
+GROUP BY genero;
+
+--- Muestra la valoración máxima y mínima por disponibilidad (disponible / no disponible) ---
+
+SELECT disponible,
+    MAX(valoracion) AS valoracion_maxima,
+    MIN(valoracion) AS valoracion_minima
+FROM peliculas
+GROUP BY disponible;
+
+--- Agrupa por género y muestra solo los géneros con más de 1 película (GROUP BY + HAVING) ---
+
+SELECT genero, COUNT(*) AS total_peliculas
+FROM peliculas
+GROUP BY genero
+HAVING COUNT(*) > 1;
+
+--- Cuenta las películas por género con valoración mayor que 5 y muestra solo los géneros con más de 1 película (WHERE + GROUP BY + HAVING) ---
+
+SELECT genero, COUNT(*) AS total_peliculas
+FROM peliculas
+WHERE valoracion > 5
+GROUP BY genero
+HAVING COUNT(*) > 1;
